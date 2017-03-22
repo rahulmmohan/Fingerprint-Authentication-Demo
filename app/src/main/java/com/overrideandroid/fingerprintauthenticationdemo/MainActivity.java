@@ -19,7 +19,6 @@ import android.annotation.TargetApi;
 import android.app.KeyguardManager;
 import android.hardware.fingerprint.FingerprintManager;
 import android.hardware.fingerprint.FingerprintManager.CryptoObject;
-import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyGenParameterSpec.Builder;
@@ -31,9 +30,9 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView messageTextView;
-    private ImageView fingerPrintImageView;
-    private KeyStore keyStore;
+    private TextView     messageTextView;
+    private ImageView    fingerPrintImageView;
+    private KeyStore     keyStore;
     private KeyGenerator keyGenerator;
     // Variable used for storing the key in the Android Keystore container
     private static final String KEY_NAME = "OverrideAndroid";
@@ -43,27 +42,26 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        messageTextView = (TextView)findViewById(R.id.textView);
-        fingerPrintImageView = (ImageView)findViewById(R.id.imageViewFinger);
+        messageTextView = (TextView) findViewById(R.id.textView);
+        fingerPrintImageView = (ImageView) findViewById(R.id.imageViewFinger);
 
-        if(checkFingerPrintSensor()){
+        if (checkFingerPrintSensor()) {
             generateKey();
             Cipher cipher = generateCipher();
-            if(cipher != null){
-                //If the cipher is initialized successfully, then create a CryptoObject instance//
+            if (cipher != null) {
+                //If the cipher is initialized successfully, then
+                // create a CryptoObject instance//
                 CryptoObject cryptoObject = new CryptoObject(cipher);
-                new FingerprintHandler(this).doAuthentication(fingerprintManager,cryptoObject);
+                new FingerprintHandler(this)
+                        .doAuthentication(fingerprintManager, cryptoObject);
             }
-
-
         }
-
-
     }
 
-    public boolean checkFingerPrintSensor(){
+    public boolean checkFingerPrintSensor() {
         // Initializing both Android Keyguard Manager and Fingerprint Manager
-        KeyguardManager keyguardManager = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
+        KeyguardManager keyguardManager = (KeyguardManager)
+                getSystemService(KEYGUARD_SERVICE);
         fingerprintManager = (FingerprintManager) getSystemService(FINGERPRINT_SERVICE);
         try {
             // Check if the fingerprint sensor is present
@@ -80,16 +78,16 @@ public class MainActivity extends AppCompatActivity {
                 messageTextView.setText("Secure lock screen not enabled");
                 return false;
             }
-        }
-        catch(SecurityException se) {
+        } catch (SecurityException se) {
             se.printStackTrace();
         }
+        messageTextView.setText("Authenticate using fingerprint!");
         return true;
 
     }
 
     @TargetApi(VERSION_CODES.M)
-    public void generateKey(){
+    public void generateKey() {
         // Obtain a reference to the Keystore using the standard Android keystore container identifier (“AndroidKeystore”)//
         try {
             keyStore = KeyStore.getInstance("AndroidKeyStore");
@@ -101,18 +99,13 @@ public class MainActivity extends AppCompatActivity {
             //Initialize an empty KeyStore//
             keyStore.load(null);
             keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (NoSuchAlgorithmException | NoSuchProviderException
+                | CertificateException | IOException e) {
             e.printStackTrace();
         }
         //Specify the operation(s) this key can be used for//
         KeyGenParameterSpec keyGenParameterSpec = new
-                Builder(KEY_NAME,KeyProperties.PURPOSE_ENCRYPT
+                Builder(KEY_NAME, KeyProperties.PURPOSE_ENCRYPT
                 | KeyProperties.PURPOSE_DECRYPT)
                 .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                 //Configure this key so that the user has to confirm their identity with a fingerprint each time they want to use it//
@@ -121,42 +114,33 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         try {
             keyGenerator.init(keyGenParameterSpec);
+            //Generate the key//
+            keyGenerator.generateKey();
         } catch (InvalidAlgorithmParameterException e) {
             e.printStackTrace();
         }
-        //Generate the key//
-        keyGenerator.generateKey();
+
     }
 
     @TargetApi(VERSION_CODES.M)
-    public Cipher generateCipher(){
+    public Cipher generateCipher() {
         Cipher cipher = null;
         //Obtain a cipher instance and configure it with the properties required for fingerprint authentication//
         try {
             cipher = Cipher.getInstance(
                     KeyProperties.KEY_ALGORITHM_AES + "/" +
-                    KeyProperties.BLOCK_MODE_CBC + "/" +
-                    KeyProperties.ENCRYPTION_PADDING_PKCS7);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
+                            KeyProperties.BLOCK_MODE_CBC + "/" +
+                            KeyProperties.ENCRYPTION_PADDING_PKCS7);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             e.printStackTrace();
         }
         try {
             keyStore.load(null);
             Key key = keyStore.getKey(KEY_NAME, null);
-            cipher.init(Cipher.ENCRYPT_MODE,key);
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnrecoverableKeyException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+        } catch (KeyStoreException | NoSuchAlgorithmException
+                | UnrecoverableKeyException | InvalidKeyException
+                | CertificateException | IOException e) {
             e.printStackTrace();
         }
         return cipher;

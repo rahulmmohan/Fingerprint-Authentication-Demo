@@ -90,17 +90,15 @@ public class MainActivity extends AppCompatActivity {
 
     @TargetApi(VERSION_CODES.M)
     public void generateKey(){
-        /* Obtain a reference to the Keystore using the standard
-         *Android keystore container identifier (“AndroidKeystore”)//
-         */
+        // Obtain a reference to the Keystore using the standard Android keystore container identifier (“AndroidKeystore”)//
         try {
             keyStore = KeyStore.getInstance("AndroidKeyStore");
         } catch (KeyStoreException e) {
             e.printStackTrace();
         }
-
         // Key generator to generate the key
         try {
+            //Initialize an empty KeyStore//
             keyStore.load(null);
             keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
         } catch (NoSuchAlgorithmException e) {
@@ -112,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        //Specify the operation(s) this key can be used for//
         KeyGenParameterSpec keyGenParameterSpec = new
                 Builder(KEY_NAME,KeyProperties.PURPOSE_ENCRYPT
                 | KeyProperties.PURPOSE_DECRYPT)
@@ -128,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
         }
         //Generate the key//
         keyGenerator.generateKey();
-
     }
 
     @TargetApi(VERSION_CODES.M)
@@ -145,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (NoSuchPaddingException e) {
             e.printStackTrace();
         }
-
         try {
             keyStore.load(null);
             Key key = keyStore.getKey(KEY_NAME, null);

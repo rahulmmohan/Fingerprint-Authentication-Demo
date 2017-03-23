@@ -15,14 +15,20 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 
+import android.Manifest.permission;
 import android.annotation.TargetApi;
 import android.app.KeyguardManager;
+import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
+import android.hardware.fingerprint.FingerprintManager.AuthenticationCallback;
+import android.hardware.fingerprint.FingerprintManager.AuthenticationResult;
 import android.hardware.fingerprint.FingerprintManager.CryptoObject;
 import android.os.Build.VERSION_CODES;
+import android.os.CancellationSignal;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyGenParameterSpec.Builder;
 import android.security.keystore.KeyProperties;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
@@ -52,12 +58,37 @@ public class MainActivity extends AppCompatActivity {
                 //If the cipher is initialized successfully, then
                 // create a CryptoObject instance//
                 CryptoObject cryptoObject = new CryptoObject(cipher);
-                new FingerprintHandler(this)
-                        .doAuthentication(fingerprintManager, cryptoObject);
+                CancellationSignal cancellationSignal = new CancellationSignal();
+                if (ActivityCompat.checkSelfPermission(this, permission.USE_FINGERPRINT) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                fingerprintManager.authenticate(cryptoObject, cancellationSignal, 0, authenticationCallback, null);
             }
         }
     }
+AuthenticationCallback authenticationCallback = new AuthenticationCallback() {
+    @Override
+    public void onAuthenticationError(int errorCode, CharSequence errString) {
+        super.onAuthenticationError(errorCode, errString);
+    }
 
+    @Override
+    public void onAuthenticationHelp(int helpCode, CharSequence helpString) {
+        super.onAuthenticationHelp(helpCode, helpString);
+    }
+
+    @Override
+    public void onAuthenticationSucceeded(AuthenticationResult result) {
+        super.onAuthenticationSucceeded(result);
+        showAuthSucceededMessage();
+    }
+
+    @Override
+    public void onAuthenticationFailed() {
+        super.onAuthenticationFailed();
+        showAuthFailedMessage();
+    }
+};
     public boolean checkFingerPrintSensor() {
         // Initializing both Android Keyguard Manager and Fingerprint Manager
         KeyguardManager keyguardManager = (KeyguardManager)
@@ -81,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (SecurityException se) {
             se.printStackTrace();
         }
-        messageTextView.setText("Authenticate using fingerprint!");
         return true;
 
     }
